@@ -35,7 +35,7 @@ class FuncionarioRegisterSerializer(serializers.ModelSerializer):
         codigo = funcionario.gerar_otp()
         send_mail(
             subject="Seu código OTP",
-            message=f"Olá {funcionario.nome}, seu código OTP é: {codigo} http://localhost:3000//verificar-otp?email={funcionario.email}",
+            message=f"Olá {funcionario.nome}, seu código OTP é: {codigo} https://avd-ydux.onrender.com/verificar-otp?email={funcionario.email}",
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[funcionario.email],
             fail_silently=False,
