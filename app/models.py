@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
+from cloudinary_storage.storage import MediaCloudinaryStorage
 from django.core.files.base import ContentFile
 import numpy as np
 import base64
@@ -146,7 +147,10 @@ class Dispensas(models.Model):
     motivo = models.TextField()
     inicio = models.DateField()
     fim = models.DateField()
-    justificativo = models.FileField(upload_to="justificativos/", blank=True, null=True)
+    justificativo = models.FileField(
+    upload_to='justificativos/',
+    storage=MediaCloudinaryStorage(), default="arquivos"
+)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pendente")
     admin_comentario = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
