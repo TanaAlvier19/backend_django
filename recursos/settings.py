@@ -30,6 +30,8 @@ DOMAIN = 'localhost:3000'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
+    'cloudinary',
+    'cloudinary_storage',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -44,13 +46,16 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
 
 ]
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dconggyoi',
+    'API_KEY': '777815344477198',
+    'API_SECRET': 'DdyMhcmHxMHQWwugPMQ9ckdiS1k',
+}
 
 # Configurações do Gmail
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-# Seu e‑mail e senha de aplicativo (App Password)
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
