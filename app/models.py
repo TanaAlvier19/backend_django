@@ -86,7 +86,7 @@ def face_image_path(instance, filename):
 
 
 class FaceEncoding(models.Model):
-    funcionario = models.OneToOneField(
+    funcionario = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="face_encoding"
     )
     encoding = models.BinaryField()
