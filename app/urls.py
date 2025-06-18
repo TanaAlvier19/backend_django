@@ -7,12 +7,13 @@ from .views import (
     ListMyLeavesAPIView,
     ListAllLeavesAPIView,
     UpdateLeaveStatusAPIView,
-    facial_recognition
-    #registrar_empresa
-)
+    facial_recognition,
+    #registrar_empresa,
+    baixar_justificativo
+ )
 urlpatterns = [
     #path('cadastrar/',registrar_empresa.as_view(), name='cadastro-empresa'),
-    
+     path('media/justificativo/<str:filename>/', baixar_justificativo, name='baixar_justificativo'),
     path(
         'funcionarios/',
         views.FuncionarioCreateView.as_view(),
