@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
 from django.utils import timezone
+from django.http import FileResponse, Http404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from .models import OTP
@@ -79,7 +80,12 @@ class EnviarOTPView(APIView):
         )
         return Response({'detail': 'OTP enviado.'}, status=status.HTTP_200_OK)
 
-
+def baixar_justificativo(request, filename):
+    caminho_arquivo = os.path.join(settings.MEDIA_ROOT, 'justificativos', filename)
+    if os.path.exists(caminho_arquivo):
+        return FileResponse(open(caminho_arquivo, 'rb'), as_attachment=True)
+    else:
+        raise Http404("Arquivo não encontrado")
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def verificar_otp(request):
