@@ -148,7 +148,6 @@ class Dispensas(models.Model):
     inicio = models.DateField()
     fim = models.DateField()
     justificativo = models.URLField(blank=True, null=True)
-)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pendente")
     admin_comentario = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
