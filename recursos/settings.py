@@ -52,6 +52,8 @@ CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dconggyoi',
     'API_KEY': '777815344477198',
     'API_SECRET': 'DdyMhcmHxMHQWwugPMQ9ckdiS1k',
+    'UPLOAD_TYPE': 'upload', 
+    'RESOURCE_TYPE': 'raw',
 }
 
 # Configurações do Gmail
