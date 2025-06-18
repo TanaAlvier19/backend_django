@@ -147,9 +147,7 @@ class Dispensas(models.Model):
     motivo = models.TextField()
     inicio = models.DateField()
     fim = models.DateField()
-    justificativo = models.FileField(
-    upload_to='justificativos/',
-    storage=MediaCloudinaryStorage(), default="arquivos"
+    justificativo = models.URLField(blank=True, null=True)
 )
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pendente")
     admin_comentario = models.TextField(blank=True)
