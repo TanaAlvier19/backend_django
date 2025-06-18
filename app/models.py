@@ -4,7 +4,6 @@ from django.utils import timezone
 from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
-from cloudinary_storage.storage import MediaCloudinaryStorage
 from django.core.files.base import ContentFile
 import numpy as np
 import base64
