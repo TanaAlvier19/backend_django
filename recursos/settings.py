@@ -6,8 +6,6 @@ import os
 
 import dj_database_url
 from django.conf import ENVIRONMENT_VARIABLE
-FACIAL_ENCRYPTION_KEY = Fernet.generate_key()  # Guardar em variável de ambiente
-FACE_RECOGNITION_TOLERANCE = 0.4
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 MEDIA_URL = '/media/'
@@ -18,7 +16,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'secret_key')
 
-DEBUG = os.environ.get('DEBUG', True)
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+
 
 ALLOWED_HOSTS = ['*']
 
@@ -44,15 +43,6 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
 
 ]
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dconggyoi',
-    'API_KEY': '777815344477198',
-    'API_SECRET': 'DdyMhcmHxMHQWwugPMQ9ckdiS1k',
-    'UPLOAD_TYPE': 'upload', 
-    'RESOURCE_TYPE': 'raw',
-}
 
 # Configurações do Gmail
 
