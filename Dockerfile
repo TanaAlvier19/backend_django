@@ -9,16 +9,6 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
 # Instala pacotes do sistema necessários para compilar dlib
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    gfortran \
-    libopenblas-dev \
-    liblapack-dev \
-    libx11-dev \
-    libgtk-3-dev \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
 # Instala dependências Python
 COPY ./requirements.txt /app/
 RUN pip install --upgrade pip
@@ -33,4 +23,5 @@ COPY . /app/
 EXPOSE 8000
 
 # Comando de inicialização do servidor (substitui o ENTRYPOINT)
-CMD ["gunicorn", "recursos.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD sh -c "gunicorn recursos.wsgi:application --bind 0.0.0.0:${PORT:-8000}"
+
