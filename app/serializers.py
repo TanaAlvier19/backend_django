@@ -35,7 +35,9 @@ class FuncionarioRegisterSerializer(serializers.ModelSerializer):
         codigo = funcionario.gerar_otp()
         send_mail(
             subject="Seu código OTP",
-            message=f"Olá {funcionario.nome}, seu código OTP é: {codigo} https://avd-ydux.onrender.com/verificar-otp?email={funcionario.email}",
+            message=f"Olá {funcionario.nome}, bem-vindo.
+            Foste cadastrado no sistema de gestão de recursos humanos.
+            Este é o código Verificação : {codigo} , Para poderes Criar Verificação e Criar a sua Senha. Click no link a seguir para tal: https://recursoshumanos.vercel.app//verificar-otp?email={funcionario.email}",
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[funcionario.email],
             fail_silently=False,
