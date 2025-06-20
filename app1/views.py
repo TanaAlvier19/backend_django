@@ -17,7 +17,7 @@ class CreateCustomTableView(APIView):
         
         try:
             success = TableCreator.objects.create_custom_table(
-                table_name=serializer.validated_data['table_name'],
+                table_name=serializer.validated_data['table_name'].lower(),
                 fields_definition=serializer.validated_data['fields']
             )
             
@@ -25,7 +25,7 @@ class CreateCustomTableView(APIView):
                 return Response(
                     {
                         "status": "success",
-                        "table": serializer.validated_data['table_name'],
+                        "table": serializer.validated_data['table_name'].lower(),
                         "schema": serializer.validated_data['fields']
                     },
                     status=status.HTTP_201_CREATED
@@ -43,6 +43,7 @@ class CreateCustomTableView(APIView):
 class DynamicDataAPI(APIView):
     permission_classes = [AllowAny]
     def post(self, request, table_name):
+        table_name = table_name.lower()
         try:
             with connection.cursor() as cursor:
                 cursor.execute("""
@@ -70,7 +71,7 @@ class DynamicDataAPI(APIView):
             return Response({
                 "success": True,
                 "message": f"Dados inseridos na tabela '{table_name}' com sucesso",
-                "table": table_name,
+                "table": table_name.lower(),
                 "inserted_data": data
             }, status=status.HTTP_201_CREATED)
 
@@ -84,6 +85,8 @@ class DynamicDataAPI(APIView):
 class TableSchemaAPI(APIView):
     permission_classes = [AllowAny]
     def get(self, request, table_name):
+        table_name = table_name.lower()
+
         try:
             with connection.cursor() as cursor:
                 cursor.execute("""
@@ -127,6 +130,8 @@ class ListTablesAPI(APIView):
 class TableDataAPI(APIView):
     permission_classes = [AllowAny]
     def get(self, request, table_name):
+        table_name = table_name.lower()
+
         with connection.cursor() as cursor:
             cursor.execute("""
                 SELECT COUNT(*) 
