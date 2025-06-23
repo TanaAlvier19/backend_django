@@ -121,9 +121,28 @@ class TableSchemaAPI(APIView):
 
 class ListTablesAPI(APIView):
     permission_classes = [AllowAny]
+
     def get(self, request):
-        tables = TableCreator.objects.values_list('table_name', flat=True)
-        return Response({"tables": list(tables)})
+        all_tables = TableCreator.objects.all()
+        valid_tables = []
+
+        with connection.cursor() as cursor:
+            for table in all_tables:
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT 1 FROM information_schema.tables 
+                        WHERE table_schema = 'public' AND table_name = %s
+                    )
+                """, [table.table_name])
+                exists = cursor.fetchone()[0]
+
+                if exists:
+                    valid_tables.append(table.table_name)
+                else:
+                    table.delete()  # Remove do model se a tabela foi dropada
+
+        return Response({"tables": valid_tables})
+
 
 
     
