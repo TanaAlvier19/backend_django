@@ -9,8 +9,8 @@ from .views import (
     UpdateLeaveStatusAPIView,
     facial_recognition,
     #registrar_empresa,
-    baixar_justificativo
-    deletar
+    baixar_justificativo,
+    deletar,
  )
 urlpatterns = [
     #path('cadastrar/',registrar_empresa.as_view(), name='cadastro-empresa'),
