@@ -325,10 +325,10 @@ class CreateLeaveRequestAPIView(CreateAPIView):
     queryset = Dispensas.objects.all()
     serializer_class = LeaveRequestSerializer
     permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [JSONParser] 
 
     def perform_create(self, serializer):
-        leave = serializer.save(funcionario=self.request.user)
+        serializer.save(funcionario=self.request.user)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ListMyLeavesAPIView(ListAPIView):
