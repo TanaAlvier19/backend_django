@@ -350,6 +350,7 @@ def ListAllLeavesAPIView(request):
     return Response({'message': serializer.data})
 
 @api_view(['DELETE'])
+@permission_classes([AllowAny])
 def deletar(request,pk):
     try:
         dispensas=Dispensas.objects.get(pk=pk)
