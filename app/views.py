@@ -349,7 +349,15 @@ def ListAllLeavesAPIView(request):
     serializer = LeaveRequestSerializer(leaves, many=True)
     return Response({'message': serializer.data})
 
-
+@api_view(['DELETE'])
+def deletar(request,pk):
+    try:
+        dispensas=Dispensas.objects.get(pk=pk)
+    except dispensas.DoesNotExist:
+        return Response(status.HTTP_404_NOT_FOUND)
+    if request.method=="DELETE":
+        dispensas.delete()
+        return Response(status.HTTP_204_NO_CONTENT)
 @api_view(['PUT'])
 @permission_classes([AllowAny])
 def UpdateLeaveStatusAPIView(request, id):
@@ -387,3 +395,4 @@ def UpdateLeaveStatusAPIView(request, id):
         )
     serializer = LeaveRequestSerializer(leave)
     return Response({'message': 'Atualizado com sucesso.', 'data': serializer.data})
+    
