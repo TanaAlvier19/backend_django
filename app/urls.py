@@ -10,10 +10,12 @@ from .views import (
     facial_recognition,
     #registrar_empresa,
     baixar_justificativo
+    deletar
  )
 urlpatterns = [
     #path('cadastrar/',registrar_empresa.as_view(), name='cadastro-empresa'),
-     path('media/justificativo/<str:filename>/', baixar_justificativo, name='baixar_justificativo'),
+    path('deletar-dispensa/<int:pk>/', deletar, name='deletar'),
+    path('media/justificativo/<str:filename>/', baixar_justificativo, name='baixar_justificativo'),
     path(
         'funcionarios/',
         views.FuncionarioCreateView.as_view(),
