@@ -10,12 +10,22 @@ from .views import (
     facial_recognition,
     #registrar_empresa,
     baixar_justificativo,
+    RegistrarEmpresaView,
+    LoginComCookieAPIView,
     deletar,
+    Agendar,
  )
 urlpatterns = [
     #path('cadastrar/',registrar_empresa.as_view(), name='cadastro-empresa'),
-    path('deletar-dispensa/<int:pk>/', deletar, name='deletar'),
+    path('assiduidade/resetar/', Agendar, name='agenda'),
+    path('deletar-dispensa/int<pk>/', deletar, name='deletar'),
+    path('login-cookie/', LoginComCookieAPIView.as_view(), name='login'),
     path('media/justificativo/<str:filename>/', baixar_justificativo, name='baixar_justificativo'),
+    path(
+        'registrar/',
+        RegistrarEmpresaView.as_view(),
+        name='registrar-empresa'
+    ),
     path(
         'funcionarios/',
         views.FuncionarioCreateView.as_view(),
@@ -52,7 +62,6 @@ urlpatterns = [
         views.perfil_do_funcionario,
         name='funcionario-me'
     ),
-
 
     path(
         'assiduidade/',
