@@ -476,10 +476,6 @@ def UpdateLeaveStatusAPIView(request, id):
         )
     serializer = LeaveRequestSerializer(leave)
     return Response({'message': 'Atualizado com sucesso.', 'data': serializer.data})
-class RegistrarEmpresaView(CreateAPIView):
-    queryset = Registrar_Empresa.objects.all()
-    serializer_class = RegistrarEmpresaSerializer
-    permission_classes = [AllowAny]
 
 @api_view(['DELETE'])
 def deletar(request,pk):
