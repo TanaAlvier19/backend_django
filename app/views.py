@@ -1,4 +1,6 @@
-
+import datetime
+from click import DateTime
+from datetime import datetime, timedelta
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import send_mail
@@ -8,15 +10,19 @@ from django.utils import timezone
 from django.http import FileResponse, Http404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from .models import OTP
+from django.contrib.auth.hashers import make_password
+from .models import OTP, Registrar_Empresa
 from rest_framework import status, generics
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.decorators import api_view, parser_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.core.mail import EmailMessage
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.generics import CreateAPIView, ListAPIView
+from app.utils import gerar_pdf_assiduidade
+from django.contrib.auth import authenticate
 try:
     import face_recognition
     RECOGNITION_AVAILABLE = True
@@ -42,7 +48,7 @@ from .serializers import (
     FuncionarioSerializer, FuncionarioRegisterSerializer,
     SetPasswordSerializer, VerifyOTPSerializer,
     AssiduidadeSerializer, CourseSerializer, CourseUserSerializer,
-    FaceImageSerializer, LeaveRequestSerializer, #RegistrarSerializers
+    FaceImageSerializer, LeaveRequestSerializer, RegistrarEmpresaSerializer
 )
 
 
@@ -181,7 +187,39 @@ def update_course(request, id):
         serializer.save()
         return Response({'message': serializer.data})
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@method_decorator(csrf_exempt, name='dispatch')
+class LoginComCookieAPIView(APIView):
+    permission_classes = [AllowAny]
 
+    def post(self, request):
+        email = request.data.get('email')
+        senha = request.data.get('password')
+
+        user = authenticate(request, email=email, password=senha)
+
+        if user is not None:
+            refresh = RefreshToken.for_user(user)
+            response = JsonResponse({'message': 'Login bem-sucedido'})
+            # Cookies seguros:
+            response.set_cookie(
+                key='access_token',
+                value=str(refresh.access_token),
+                httponly=True,
+                samesite='Lax',
+                secure=False,  # Só funciona em produção com HTTPS
+                max_age=60 * 60,  # 1 hora
+            )
+            response.set_cookie(
+                key='refresh_token',
+                value=str(refresh),
+                httponly=True,
+                samesite='Lax',
+                secure=False,
+                max_age=60 * 60 * 24 * 7,  # 7 dias
+            )
+            return response
+        else:
+            return JsonResponse({'error': 'Credenciais inválidas'}, status=401)
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def delete_course(request, id):
@@ -207,9 +245,57 @@ class AssiduidadeList(generics.ListCreateAPIView):
     permission_classes = [AllowAny] 
 class AssiduidadeListCreate(generics.ListCreateAPIView):
     serializer_class = AssiduidadeSerializer
-    permission_classes = [IsAuthenticated] 
+    permission_classes = [IsAuthenticated]
+
     def get_queryset(self):
         return Assiduidade.objects.filter(funcionario=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        funcionario_id = request.data.get('funcionario')
+
+        if not funcionario_id:
+            return Response({'detail': 'ID do funcionário é obrigatório.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            funcionario = Funcionario.objects.get(pk=funcionario_id)
+        except Funcionario.DoesNotExist:
+            return Response({'detail': 'Funcionário não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+        hoje = timezone.now().date()
+        entrada = request.data.get('entrada')
+        saida = request.data.get('saida')
+
+        registro_hoje = Assiduidade.objects.filter(funcionario=funcionario, data=hoje).first()
+
+        if entrada and not registro_hoje:
+            serializer = self.get_serializer(data={
+                'funcionario': funcionario.id,
+                'entrada': entrada,
+                'data': hoje
+            })
+            serializer.is_valid(raise_exception=True)
+            serializer.save(funcionario=funcionario, data=hoje)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        elif saida and registro_hoje and registro_hoje.saida is None:
+            registro_hoje.saida = saida
+            registro_hoje.save()
+            serializer = self.get_serializer(registro_hoje)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        elif entrada and registro_hoje:
+            return Response({'detail': 'Entrada já registrada hoje.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        elif saida and not registro_hoje:
+            return Response({'detail': 'Não é possível registrar saída sem entrada.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        elif saida and registro_hoje.saida:
+            return Response({'detail': 'Saída já registrada.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'detail': 'Informe entrada ou saída.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 class AssiduidadeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Assiduidade.objects.all()
     serializer_class = AssiduidadeSerializer
@@ -222,7 +308,7 @@ def facial_recognition(request):
     try:
         image_data = request.data.get('image')
         if not image_data:
-            return Response({'error': 'Imagem não fornecida'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Imagem não fornecida'}, status=400)
 
         if ';base64,' in image_data:
             _, imgstr = image_data.split(';base64,')
@@ -232,34 +318,27 @@ def facial_recognition(request):
         image = face_recognition.load_image_file(BytesIO(image_bytes))
         input_encodings = face_recognition.face_encodings(image)
         if not input_encodings:
-            return Response({'error': 'Nenhum rosto detectado'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Nenhum rosto detectado'}, status=400)
         input_encoding = input_encodings[0]
-
         tolerance = 0.5
-
         best_match_id = None
         best_distance = None
+        for funcionario in Funcionario.objects.prefetch_related('face_encoding').all():
+            for encoding_model in funcionario.face_encoding.all():
+                known_encoding = encoding_model.get_encoding()
 
-        for funcionario in Funcionario.objects.select_related('face_encoding').all():
-            if not hasattr(funcionario, 'face_encoding'):
-                continue
+                distance = face_recognition.face_distance([known_encoding], input_encoding)[0]
 
-            known_encoding = np.frombuffer(funcionario.face_encoding.encoding, dtype=np.float64)
-
-            distance = face_recognition.face_distance([known_encoding], input_encoding)[0]
-
-            if best_distance is None or distance < best_distance:
-                best_distance = distance
-                best_match_id = funcionario.id
-
+                if best_distance is None or distance < best_distance:
+                    best_distance = distance
+                    best_match_id = funcionario.id
         if best_distance is not None and best_distance <= tolerance:
             return Response({'funcionario_id': best_match_id, 'distance': best_distance})
-
-        return Response({'error': 'Funcionário não reconhecido', 'best_distance': best_distance},
-                        status=status.HTTP_404_NOT_FOUND)
-
+        return Response({'error': 'Funcionário não reconhecido', 'best_distance': best_distance}, status=404)
+    
     except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'error': str(e)}, status=500)
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @parser_classes([MultiPartParser, JSONParser])
@@ -292,26 +371,24 @@ def register_face(request):
         
         if not face_encodings:
             return Response({'error': 'Nenhum rosto detectado'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        if len(face_encodings) > 1:
-            return Response({'error': 'Múltiplos rostos detectados'}, status=status.HTTP_400_BAD_REQUEST)
+
         
         
         face_image = FaceImage(funcionario=funcionario)
         face_image.image.save(image_file.name, image_file)
         face_image.save()
         
-        encoding = FaceEncoding.objects.create(
-            funcionario=funcionario,
-            encoding=face_encodings[0].tobytes()
+        for encoding_array in face_encodings:
+            encoding = FaceEncoding.objects.create(
+        funcionario=funcionario,
         )
-        
-        return Response({
-            'success': True
-        },status=status.HTTP_201_CREATED)
+            encoding.set_encoding(encoding_array)
+            encoding.save()
+
     
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return Response({'success': True, 'message': 'Fotos cadastradas com sucesso!'}, status=status.HTTP_201_CREATED)
 
 class FaceImageList(generics.ListCreateAPIView):
     queryset = FaceImage.objects.all()
@@ -348,17 +425,20 @@ def ListAllLeavesAPIView(request):
     leaves = Dispensas.objects.all().order_by('-created_at')
     serializer = LeaveRequestSerializer(leaves, many=True)
     return Response({'message': serializer.data})
-
-@api_view(['DELETE'])
+@api_view(['POST'])
 @permission_classes([AllowAny])
-def deletar(request,pk):
-    try:
-        dispensas=Dispensas.objects.get(pk=pk)
-    except dispensas.DoesNotExist:
-        return Response(status.HTTP_404_NOT_FOUND)
-    if request.method=="DELETE":
-        dispensas.delete()
-        return Response(status.HTTP_204_NO_CONTENT)
+def Agendar(request):
+    pdf= gerar_pdf_assiduidade()
+    admin_email = Registrar_Empresa.objects.filter(is_admin=True).values_list('email_do_representante', flat=True)
+    email=EmailMessage(
+        subject='Relatório de Assiduidade',
+        body='Segue em anexo o relatório de assiduidade.',
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=settings.DEFAULT_FROM_EMAIL
+    )
+    email.attach('relatorio_assiduidade.pdf', pdf.getvalue(), 'application/pdf')
+    email.send(fail_silently=False)
+    Assiduidade.objects.all().delete()
 @api_view(['PUT'])
 @permission_classes([AllowAny])
 def UpdateLeaveStatusAPIView(request, id):
@@ -396,4 +476,17 @@ def UpdateLeaveStatusAPIView(request, id):
         )
     serializer = LeaveRequestSerializer(leave)
     return Response({'message': 'Atualizado com sucesso.', 'data': serializer.data})
-    
+class RegistrarEmpresaView(CreateAPIView):
+    queryset = Registrar_Empresa.objects.all()
+    serializer_class = RegistrarEmpresaSerializer
+    permission_classes = [AllowAny]
+
+@api_view(['DELETE'])
+def deletar(request,pk):
+    try:
+        dispensas=Dispensas.objects.get(pk=pk)
+    except dispensas.DoesNotExist:
+        return Response(status.HTTP_404_NOT_FOUND)
+    if request.method=="DELETE":
+        dispensas.delete()
+        return Response(status.HTTP_204_NO_CONTENT)
