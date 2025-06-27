@@ -11,7 +11,7 @@ from django.http import FileResponse, Http404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import make_password
-from .models import OTP, Registrar_Empresa
+from .models import OTP
 from rest_framework import status, generics
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.decorators import api_view, parser_classes, permission_classes
