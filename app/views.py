@@ -48,7 +48,7 @@ from .serializers import (
     FuncionarioSerializer, FuncionarioRegisterSerializer,
     SetPasswordSerializer, VerifyOTPSerializer,
     AssiduidadeSerializer, CourseSerializer, CourseUserSerializer,
-    FaceImageSerializer, LeaveRequestSerializer, RegistrarEmpresaSerializer
+    FaceImageSerializer, LeaveRequestSerializer
 )
 
 
