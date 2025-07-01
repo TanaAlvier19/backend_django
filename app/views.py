@@ -428,7 +428,7 @@ def ListAllLeavesAPIView(request):
 hora=datetime.now()
 pdf= gerar_pdf_assiduidade()
 
-if hora.hour==14 and hora.minute==20:
+if hora.hour==14 and hora.minute==30:
     email=EmailMessage(
             subject='Relatório de Assiduidade',
             body='Segue em anexo o relatório de assiduidade.',
