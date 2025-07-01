@@ -425,19 +425,24 @@ def ListAllLeavesAPIView(request):
     leaves = Dispensas.objects.all().order_by('-created_at')
     serializer = LeaveRequestSerializer(leaves, many=True)
     return Response({'message': serializer.data})
-hora=datetime.now()
-pdf= gerar_pdf_assiduidade()
+pdf = gerar_pdf_assiduidade()
 
-if hora.hour==14 and hora.minute==30:
-    email=EmailMessage(
-            subject='Relatório de Assiduidade',
-            body='Segue em anexo o relatório de assiduidade.',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            to=[settings.DEFAULT_FROM_EMAIL]
+@csrf_exempt
+def agendar(request):
+    if request.method == 'POST':
+        email = EmailMessage(
+                subject='Relatório de Assiduidade',
+                body='Segue em anexo o relatório de assiduidade.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[settings.DEFAULT_FROM_EMAIL]
         )
-    email.attach('relatorio_assiduidade.pdf', pdf.getvalue(), 'application/pdf')
-    email.send(fail_silently=False)
-    Assiduidade.objects.all().delete()
+        email.attach('relatorio_assiduidade.pdf', pdf.getvalue(), 'application/pdf')
+        email.send(fail_silently=False)
+        Assiduidade.objects.all().delete()
+        return JsonResponse({'status': 'relatório enviado e dados apagados'})
+    else:
+            return JsonResponse({'status': 'fora do horário permitido'}, status=400)
+    return JsonResponse({'erro': 'somente POST permitido'}, status=405)
 
 @api_view(['PUT'])
 @permission_classes([AllowAny])
