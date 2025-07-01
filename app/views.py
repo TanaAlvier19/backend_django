@@ -426,7 +426,7 @@ def ListAllLeavesAPIView(request):
     serializer = LeaveRequestSerializer(leaves, many=True)
     return Response({'message': serializer.data})
 hora=datetime.now()
-if hora.hour==13 and hora.minute==48:
+if hora.hour==14 and hora.minute==06:
     pdf= gerar_pdf_assiduidade()
     admin_email = Registrar_Empresa.objects.filter(is_admin=True).values_list('email_do_representante', flat=True)
     email=EmailMessage(
