@@ -12,11 +12,9 @@ from .views import (
     baixar_justificativo,
     LoginComCookieAPIView,
     deletar,
-    Agendar,
  )
 urlpatterns = [
     #path('cadastrar/',registrar_empresa.as_view(), name='cadastro-empresa'),
-    path('assiduidade/resetar/', Agendar, name='agenda'),
     path('deletar-dispensa/int<pk>/', deletar, name='deletar'),
     path('login-cookie/', LoginComCookieAPIView.as_view(), name='login'),
     path('media/justificativo/<str:filename>/', baixar_justificativo, name='baixar_justificativo'),
