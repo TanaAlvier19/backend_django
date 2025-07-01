@@ -427,17 +427,17 @@ def ListAllLeavesAPIView(request):
     return Response({'message': serializer.data})
 hora=datetime.now()
 if hora.hour==13 and hora.minute==48:
-        pdf= gerar_pdf_assiduidade()
-        admin_email = Registrar_Empresa.objects.filter(is_admin=True).values_list('email_do_representante', flat=True)
-        email=EmailMessage(
+    pdf= gerar_pdf_assiduidade()
+    admin_email = Registrar_Empresa.objects.filter(is_admin=True).values_list('email_do_representante', flat=True)
+    email=EmailMessage(
             subject='Relatório de Assiduidade',
             body='Segue em anexo o relatório de assiduidade.',
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=settings.DEFAULT_FROM_EMAIL
-        )
-        email.attach('relatorio_assiduidade.pdf', pdf.getvalue(), 'application/pdf')
-        email.send(fail_silently=False)
-        Assiduidade.objects.all().delete()
+    )
+    email.attach('relatorio_assiduidade.pdf', pdf.getvalue(), 'application/pdf')
+    email.send(fail_silently=False)
+    Assiduidade.objects.all().delete()
 @api_view(['PUT'])
 @permission_classes([AllowAny])
 def UpdateLeaveStatusAPIView(request, id):
