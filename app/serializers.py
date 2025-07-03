@@ -42,7 +42,7 @@ class FuncionarioRegisterSerializer(serializers.ModelSerializer):
             Este é o código de verificação: {codigo}.
 
             Para criar a sua verificação e senha, clique no link:
-            https://recursoshumanos.vercel.app/verificar-otp?email={funcionario.email}
+            https://recursoshumanos-ashy.vercel.app/verificar-otp?email={funcionario.email}
             """,
 
             from_email=settings.DEFAULT_FROM_EMAIL,
