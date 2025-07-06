@@ -17,7 +17,7 @@ from .views import (
 urlpatterns = [
     #path('cadastrar/',registrar_empresa.as_view(), name='cadastro-empresa'),
     path('assiduidade/apagar/',agendar, name="agendar"),
-    path('deletar-dispensa/int<pk>/', deletar, name='deletar'),
+    path('deletar-dispensa/<int:pk>/', deletar, name='deletar'),
     path('login-cookie/', LoginComCookieAPIView.as_view(), name='login'),
     path('media/justificativo/<str:filename>/', baixar_justificativo, name='baixar_justificativo'),
     path(
